@@ -1,0 +1,27 @@
+
+ram0: Memory.MappedMemory @ sysbus 0x40000000
+    size: 0x10000000
+
+clock0: Miscellaneous.LiteX_MMCM_CSR32 @ sysbus 0xe0004800
+
+timer0: Timers.LiteX_Timer_CSR32 @ sysbus 0xe0002800
+    frequency: 1000000
+    ->cpu0@1
+
+uart0: UART.LiteX_UART @ sysbus 0xe0001800
+    ->cpu0@2
+
+// cpu0 runs with a VexRiscv-specific built-in interrupt controller
+// (which is controlled via custom CSRs 0xBC0, 0xFC0, etc.)
+cpu0: CPU.VexRiscv @ sysbus
+    cpuType: "rv32imacs"
+    hartId: 0
+    privilegeArchitecture: PrivilegeArchitecture.Priv1_11
+
+xls0: Verilated.VerilatedPeripheral @ sysbus <0x70000000, +0x20000>
+    maxWidth: 64
+    frequency: 1000000
+    limitBuffer: 100
+    timeout: 1000
+    numberOfInterrupts: 1
+    0->cpu0@4

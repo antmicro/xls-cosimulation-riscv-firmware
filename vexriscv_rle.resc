@@ -1,0 +1,27 @@
+:name: Demo VexRiscv
+:description: This script runs a simple test FW on VexRiscv CPU.
+
+$name?="Demo"
+
+using sysbus
+mach create $name
+machine LoadPlatformDescription $ORIGIN/vexriscv.repl
+
+$bin?=$ORIGIN/out/fw.elf
+$xlsPeripheralLinux?=$ORIGIN/lib/librenode_xls_peripheral_plugin.so
+$xlsPeripheralConfig?=$ORIGIN/rle_enc_sm.textproto
+
+# These two properties must be assigned in this exact order
+xls0 SimulationContext $xlsPeripheralConfig
+xls0 SimulationFilePathLinux $xlsPeripheralLinux
+
+showAnalyzer uart0
+
+macro reset
+"""
+    sysbus LoadELF $bin
+"""
+
+runMacro $reset
+
+machine StartGdbServer 3333 true

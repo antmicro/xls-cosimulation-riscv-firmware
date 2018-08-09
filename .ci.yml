@@ -1,0 +1,61 @@
+# Copyright (C) 2024 Antmicro
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+image: debian:bullseye
+
+stages:
+- prepare
+- build
+
+variables:
+  GITLAB_MATRIX_PATH: matrix-gitlab.json
+
+create_matrix:
+  stage: prepare
+  before_script:
+  - export DEBIAN_FRONTEND=noninteractive
+  - apt -qqy update
+  - apt install -y python3
+  script:
+  - python3 ci/generate_matrix.py gitlab ci/matrix.json
+  artifacts:
+    paths: [$GITLAB_MATRIX_PATH]
+
+.get-toolchain: &get-toolchain |-
+  echo Grabbing a RISC-V toolchain
+
+  wget -O toolchain.tar.gz https://github.com/chipsalliance/caliptra-tools/releases/download/gcc-v12.1.0/riscv64-unknown-elf.gcc-12.1.0.tar.gz
+  tar -xzvf toolchain.tar.gz
+  export TOOLCHAIN_PREFIX=`pwd`/riscv/bin/riscv64-unknown-elf-
+
+build_fw:
+  stage: build
+  parallel: 10
+  before_script:
+  - export DEBIAN_FRONTEND=noninteractive
+  - apt -qqy update
+  - apt install -y python3 wget make libmpc-dev
+
+  - echo Installing RISC-V toolchain
+  - source ./ci/get_toolchain.sh
+  script:
+  - export PLATFORM=`python3 ci/gitlab_get_matrix_config.py ${CI_NODE_INDEX} platform`
+  - export MAKE_CONFIG=`python3 ci/gitlab_get_matrix_config.py ${CI_NODE_INDEX} config`
+
+  - "echo Building the firmware PLATFORM: ${PLATFORM}, CONFIG: ${MAKE_CONFIG}"
+  - make PLATFORM=${PLATFORM} ${MAKE_CONFIG}
+  artifacts:
+    paths: [out/*]
