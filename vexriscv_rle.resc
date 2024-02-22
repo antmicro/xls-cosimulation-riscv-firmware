@@ -7,7 +7,7 @@ using sysbus
 mach create $name
 machine LoadPlatformDescription $ORIGIN/vexriscv.repl
 
-$bin?=$ORIGIN/out/fw.elf
+$bin?=$ORIGIN/out/demo-renode/fw_demo-renode.elf
 $xlsPeripheralLinux?=$ORIGIN/lib/librenode_xls_peripheral_plugin.so
 $xlsPeripheralConfig?=$ORIGIN/rle_enc_sm.textproto
 
